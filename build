@@ -1,0 +1,62 @@
+#! /bin/bash
+
+magenta () { echo -e "\e[1m\e[35m$1\e[0m"; }
+red () { echo -e "\e[1m\e[31m$1\e[0m"; }
+green () { echo -e "\e[1m\e[32m$1\e[0m"; }
+yellow () { echo -e "\e[1m\e[33m$1\e[0m"; }
+
+magenta "Welcome to the CosmicOS! Let's start building :)"
+
+#Check if docker is installed.
+command -v docker >/dev/null 2>&1 || { red "Docker is needed to build CosmicOS but it's not installed.  Aborting."; exit 1;} 
+
+#Check if docker is installed.
+command -v repo >/dev/null 2>&1 || { red "Repo is needed to build CosmicOS but it's not installed.  Please check https://source.android.com/setup/build/downloading. Aborting."; exit 1;} 
+
+#Checking docker version.
+DOCKER_SUPPORTED=19.03.3-ce
+DOCKER_VERSION=$(docker --version | cut -d' ' -f3 | cut -d',' -f1)
+
+echo "Docker version $DOCKER_VERSION detected!"
+if [ ! $DOCKER_SUPPORTED == $DOCKER_VERSION ]
+then
+    yellow "The version of docker you are running was not tested to build CosmicOS. You should be fine but continue at your own risk. Check online for the supoorted versions."
+fi
+
+#Checking repo version.
+REPO_SUPPORTED=v1.13.71
+REPO_VERSION=$(repo --version | cut -d' ' -f3 | head -n 1)
+
+echo "Repo version $REPO_VERSION detected!"
+
+if [ ! $REPO_SUPPORTED == $REPO_VERSION ]
+then
+    yellow "The version of repo you are running was not tested to build CosmicOS. You should be fine but continue at your own risk. Check online for the supoorted versions."
+fi
+
+#Check if daemon is running
+docker ps >/dev/null 2>&1 || { red "Docker daemon not running? Try running 'systemctl start docker'"; exit 1; }
+
+echo "Docker daemon OK!"
+
+magenta "Cloning repos. Please wait..."
+
+mkdir cosmic
+cd cosmic
+repo init -u https://github.com/bernardocrodrigues/cosmic-manifest > /dev/null
+repo sync
+
+echo Fetching Yocto Build Environment Image...
+docker pull bernardocrodrigues/yocto:2.7
+
+magenta "Entering build Environment..."
+
+docker run \
+            -ti \
+            --privileged \
+            -v /etc/passwd:/etc/passwd \
+            -v $HOME:$HOME \
+            -u $(id -u ${USER}) \
+            -w $HOME \
+            yocto:2.7 \
+            /bin/bash 
