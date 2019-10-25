@@ -41,8 +41,8 @@ echo "Docker daemon OK!"
 
 magenta "Cloning repos. Please wait..."
 
-mkdir cosmic
-cd cosmic
+mkdir src
+cd src
 repo init -u https://github.com/bernardocrodrigues/cosmic-manifest > /dev/null
 repo sync
 
