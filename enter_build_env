@@ -13,6 +13,6 @@ docker run \
             -v /etc/passwd:/etc/passwd \
             -v $HOME:$HOME \
             -u $(id -u ${USER}) \
-            -w . \
+            -w $HOME \
             bernardocrodrigues/yocto:2.7 \
-            /bin/bash 
+            /bin/bash

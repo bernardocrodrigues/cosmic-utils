@@ -14,7 +14,7 @@ command -v docker >/dev/null 2>&1 || { red "Docker is needed to build CosmicOS b
 command -v repo >/dev/null 2>&1 || { red "Repo is needed to build CosmicOS but it's not installed.  Please check https://source.android.com/setup/build/downloading. Aborting."; exit 1;} 
 
 #Checking docker version.
-DOCKER_SUPPORTED=19.03.3-ce
+DOCKER_SUPPORTED=19.03.8
 DOCKER_VERSION=$(docker --version | cut -d' ' -f3 | cut -d',' -f1)
 
 echo "Docker version $DOCKER_VERSION detected!"
@@ -24,12 +24,12 @@ then
 fi
 
 #Checking repo version.
-REPO_SUPPORTED=v1.13.71
-REPO_VERSION=$(repo --version | cut -d' ' -f3 | head -n 1)
+REPO_SUPPORTED=2.5
+REPO_VERSION=$(repo --version | awk 'NR==2{print $4}')
 
 echo "Repo version $REPO_VERSION detected!"
 
-if [ ! $REPO_SUPPORTED == $REPO_VERSION ]
+if [[ ! $REPO_SUPPORTED == $REPO_VERSION ]]
 then
     yellow "The version of repo you are running was not tested to build CosmicOS. You should be fine but continue at your own risk. Check online for the supoorted versions."
 fi
@@ -39,24 +39,16 @@ docker ps >/dev/null 2>&1 || { red "Docker daemon not running? Try running 'syst
 
 echo "Docker daemon OK!"
 
-magenta "Cloning repos. Please wait..."
+if [ -d ".src" ]; then
+    magenta "Cloning repos. Please wait..."
 
-mkdir src
-cd src
-repo init -u https://github.com/bernardocrodrigues/cosmic-manifest > /dev/null
-repo sync
+    mkdir src
+    cd src
+    repo init -u https://github.com/bernardocrodrigues/cosmic-manifest > /dev/null
+    repo sync
 
-echo Fetching Yocto Build Environment Image...
-docker pull bernardocrodrigues/yocto:2.7
+    magenta "Fetching Yocto Build Environment Image..."
+    docker pull bernardocrodrigues/yocto:2.7
+fi
 
-magenta "Entering build Environment..."
-
-docker run \
-            -ti \
-            --privileged \
-            -v /etc/passwd:/etc/passwd \
-            -v $HOME:$HOME \
-            -u $(id -u ${USER}) \
-            -w $HOME \
-            yocto:2.7 \
-            /bin/bash 
+sh enter_build_env
